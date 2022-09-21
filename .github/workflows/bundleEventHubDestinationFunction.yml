@@ -1,0 +1,74 @@
+name: Bundle Event Hub Destination Function
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+  workflow_dispatch:
+jobs:
+  DEV:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main' || github.event.label.name == '!!_RELEASE_TO_QA'
+    environment: DEV
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install NPM packages
+        run: npm i --no-fund
+      - name: Run tests
+        run: npm test
+      - name: Deploy Destination Function
+        run: GITHUB_JOB=${{ github.job }} FUNCTION_ID=${{ secrets.FUNCTION_ID }} PUBLIC_API_TOKEN=${{ secrets.PUBLIC_API_TOKEN }} node ./scripts/deployDestinationFunction.mjs --unhandled-rejections=strict || { exit 1;}
+      # - name: Commit/Push files in the output folder
+      #   run: |
+      #     git config user.name github-actions
+      #     git config user.email github-actions@github.com
+      #     git add .
+      #     (git commit -m "chore(assets): update assets") || true
+      #     (git push) || true
+  QA:
+    runs-on: ubuntu-latest
+    if: github.event.label.name == '!!_RELEASE_TO_QA'
+    environment: QA
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install NPM packages
+        run: npm i --no-fund
+      - name: Run tests
+        run: npm test
+      - name: Deploy Destination Function
+        run: GITHUB_JOB=${{ github.job }} FUNCTION_ID=${{ secrets.FUNCTION_ID }} PUBLIC_API_TOKEN=${{ secrets.PUBLIC_API_TOKEN }} node ./scripts/deployDestinationFunction.mjs --unhandled-rejections=strict || { exit 1;}
+      # - name: Commit/Push files in the output folder
+      #   run: |
+      #     git config user.name github-actions
+      #     git config user.email github-actions@github.com
+      #     git add .
+      #     (git commit -m "chore(assets): update assets") || true
+      #     (git push) || true
+  PROD:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: PROD
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install NPM packages
+        run: npm i --no-fund
+      - name: Run tests
+        run: npm test
+      - name: Deploy Destination Function
+        run: GITHUB_JOB=${{ github.job }} FUNCTION_ID=${{ secrets.FUNCTION_ID }} PUBLIC_API_TOKEN=${{ secrets.PUBLIC_API_TOKEN }} node ./scripts/deployDestinationFunction.mjs --unhandled-rejections=strict || { exit 1;}
+      # - name: Commit/Push files in the output folder
+      #   run: |
+      #     git config user.name github-actions
+      #     git config user.email github-actions@github.com
+      #     git add .
+      #     (git commit -m "chore(assets): update assets") || true
+      #     (git push) || true
