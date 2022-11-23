@@ -17,7 +17,5 @@ try {
       onTrack
     };
   }
-  /* c8 ignore start */
-} catch (e) {
-  /* c8 ignore end */
-}
+  // eslint-disable-next-line no-empty
+} catch (e) {}

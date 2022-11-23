@@ -4,10 +4,7 @@ import path from 'path';
 import vm from 'vm';
 const { GITHUB_JOB, FUNCTION_ID, PUBLIC_API_TOKEN } = process.env;
 
-const functionCode = fs.readFileSync(
-  path.resolve('./src', 'personasEventHub.js'),
-  'utf8'
-);
+const functionCode = fs.readFileSync(path.resolve('./src', 'index.js'), 'utf8');
 
 const code = `/**
  * Output from GITHUB ${GITHUB_JOB} Environment
