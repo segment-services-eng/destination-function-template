@@ -1,7 +1,7 @@
 {
   "repository": {
     "type": "git",
-    "url": "https://github.com/segment-services-eng/jpmc-personas-event-hub"
+    "url": "https://github.com/segment-services-eng/destination-function-template"
   },
   "license": "ISC",
   "engineStrict": true,
