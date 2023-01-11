@@ -36,9 +36,7 @@
     "semver": "^7.3.7"
   },
   "scripts": {
-    "requirements-check": "node check_node_version.js",
     "test": "jest",
-    "prepare": "husky install",
-    "install": "node check_node_version.js && npm run install"
+    "prepare": "husky install"
   }
 }
