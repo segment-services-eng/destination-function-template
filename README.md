@@ -14,8 +14,8 @@ Base template to build your next destination function with
 - `npm run test`
 
 ## Included
-1. Jest for code testing
-2. Prettier for code formatting
-3. ESLint for code linting
-4. GitHub Actions script for function deploy
-5. Husky for commit validation
+1. [Jest for code testing](https://jestjs.io/docs/expect)
+2. [Prettier for code formatting](https://prettier.io/)
+3. [ESLint for code linting](https://eslint.org/)
+4. [GitHub Actions script for function deploy](https://docs.github.com/en/actions)
+5. [Husky for commit validation](https://github.com/typicode/husky)
