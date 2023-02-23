@@ -13,7 +13,7 @@
 ## To Test
 `npm run test`
 - GitHub Actions workflow also runs tests before deploying
-- Tests are created in `index.test.js`
+- Tests are created in `src/index.test.js`
 
 ## To Deploy via GitHub Actions
 1. Create GitHub Environments (DEV, QA, PROD, etc)
