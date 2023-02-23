@@ -7,6 +7,7 @@ module.exports = function (wallaby) {
       type: 'node'
     },
     setup: function (wallaby) {
+      const btoa = require('btoa');
       const _ = require('lodash');
       const moment = require('moment');
       const crypto = require('crypto');
