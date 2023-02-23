@@ -5,13 +5,15 @@
 
 ## Setup Steps 
 1. `nvm use` (to get the right version of NodeJS)
-  - As of 2023/02/22, Segment Source & Destination Functions require NodeJS 14.19.3
-  - [If needed, install `nvm`](https://github.com/nvm-sh/nvm#install--update-script)
+    - As of 2023/02/22, Segment Source & Destination Functions require NodeJS 14.19.3
+    - [If needed, install `nvm`](https://github.com/nvm-sh/nvm#install--update-script)
 2. `npm install` (to install npm dependencies)
 
 
 ## To Test
-- `npm run test`
+`npm run test`
+- GitHub Actions workflow also runs tests before deploying
+- Tests are created in `index.test.js`
 
 ## To Deploy via GitHub Actions
 1. Create GitHub Environments (DEV, QA, PROD, etc)
