@@ -1,5 +1,5 @@
-# destination-function-template
-Base template to build your next destination function with 
+# Destination Function Template
+> Base template to build your next destination function with 
 
 1. Click `Use This Template` above (If Segment PS, add to `Segment Services Engineering` Organization
 
@@ -15,12 +15,12 @@ Base template to build your next destination function with
 
 ## To Deploy via GitHub Actions
 1. Create GitHub Environments (DEV, QA, PROD, etc)
-  - DEV is enabled by default
+    - *`DEV` is enabled by default*
 2. Create Function in Segment Workspace
 3. Create Public API Token to allow for deploying
 3. Add the following Environment Secrets
-  - FUNCTION_ID
-  - PUBLIC_API_TOKEN
+    - `FUNCTION_ID`
+    - `PUBLIC_API_TOKEN`
 
 ## Tooling Included
 1. [Jest for code testing](https://jestjs.io/docs/expect)
