@@ -1,4 +1,3 @@
-![Destination Functions](https://user-images.githubusercontent.com/7215306/220996909-8445d628-4925-4c5d-b66a-0c60e911bd93.png)
 # Destination Function Template
 > Base template to build your next destination function with 
 
