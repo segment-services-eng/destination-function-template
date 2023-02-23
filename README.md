@@ -4,7 +4,7 @@
 1. Click `Use This Template` above (If Segment PS, add to `Segment Services Engineering` Organization
 
 ## Setup Steps 
-1. `nvm use` (to get the right version of node)
+1. `nvm use` (to get the right version of NodeJS)
   - As of 2023/02/22, Segment Source & Destination Functions require NodeJS 14.19.3
   - [If needed, install `nvm`](https://github.com/nvm-sh/nvm#install--update-script)
 2. `npm install` (to install npm dependencies)
