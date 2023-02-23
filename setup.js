@@ -1,6 +1,7 @@
 module.exports = async function () {
-  // globalThis.fetch = require('jest-fetch-mock');
-  // fetch.enableMocks();
+  globalThis.btoa = require('btoa');
+  globalThis.fetch = require('jest-fetch-mock');
+  fetch.enableMocks();
   globalThis._ = require('lodash');
   globalThis.crypto = require('crypto');
   globalThis.moment = require('moment');
