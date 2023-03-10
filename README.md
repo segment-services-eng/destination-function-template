@@ -16,8 +16,8 @@
 - Tests are created in `src/index.test.js`
 
 ## To Deploy via GitHub Actions
-1. Create GitHub Environments (DEV, QA, PROD, etc)
-    - *`DEV` is enabled by default*
+1. Create GitHub Environments [here](https://github.com/segment-services-eng/destination-function-template/settings/environments) (DEV, QA, PROD, etc)
+    - *`DEV` is enabled by default in the [buildDestinationFunction.yml](https://github.com/segment-services-eng/destination-function-template/blob/main/.github/workflows/buildDestinationFunction.yml) file*
 2. Create Function in Segment Workspace
 3. Create Public API Token to allow for deploying
 3. Add the following Environment Secrets
