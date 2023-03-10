@@ -24,6 +24,9 @@
     - `FUNCTION_ID`
     - `PUBLIC_API_TOKEN`
 
+## Deploying to multiple environments
+1. Once changes look good in the DEV environment, add the label `!!_RELEASE_TO_QA` to the PR to deploy it to QA
+
 ## Tooling Included
 1. [Jest for code testing](https://jestjs.io/docs/expect)
 2. [Prettier for code formatting](https://prettier.io/)
