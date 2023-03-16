@@ -25,7 +25,9 @@
     - `PUBLIC_API_TOKEN`
 
 ## Deploying to multiple environments
-1. Once changes look good in the DEV environment, add the label `!!_RELEASE_TO_QA` to the PR to deploy it to QA
+1. Once changes look good in the DEV environment, uncomment the QA section from the buildDestinationFunction.yml file.
+2. Push changes to your branch
+3. Add the label `!!_RELEASE_TO_QA` to the PR to deploy it to QA
 
 ## Tooling Included
 1. [Jest for code testing](https://jestjs.io/docs/expect)
