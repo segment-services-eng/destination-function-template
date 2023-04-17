@@ -42,17 +42,20 @@ try {
         console.log(`Re-trying call to Post Destination Function: ${retry}`)
     }
   );
+  console.log(`Response: ${response.status} ${response.statusText}`);
 
-  const result = await response.json();
-
-  if (result.errors) {
-    console.log(result);
-    throw new Error(result.errors);
-  }
-
-  if (result.data.function.deployedAt) {
-    const { deployedAt } = result.data.function;
-    console.log(`Successfully Pushed Function Code: ${deployedAt}`);
+  if (response.status === 200) {
+    const result = await response.json();
+    if (result.errors) {
+      console.log(result);
+      throw new Error(result.errors);
+    }
+    if (result.data.function.deployedAt) {
+      const { deployedAt } = result.data.function;
+      console.log(`Successfully Pushed Function Code: ${deployedAt}`);
+    }
+  } else {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
   }
 } catch (error) {
   throw new Error(error);
