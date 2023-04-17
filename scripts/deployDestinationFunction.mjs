@@ -1,5 +1,5 @@
 import fs from 'fs';
-import fetch from 'node-fetch';
+import fetch from 'node-fetch-retry';
 import path from 'path';
 import vm from 'vm';
 const { GITHUB_JOB, FUNCTION_ID, PUBLIC_API_TOKEN } = process.env;
@@ -35,7 +35,11 @@ try {
         Authorization: `Bearer ${PUBLIC_API_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ code })
+      body: JSON.stringify({ code }),
+      retry: 12,
+      pause: 1000,
+      callback: retry =>
+        console.log(`Re-trying call to Post Destination Function: ${retry}`)
     }
   );
 
