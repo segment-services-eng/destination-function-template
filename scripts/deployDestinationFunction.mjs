@@ -25,9 +25,9 @@ try {
 /**
  * Push to Function Instance
  */
-let response;
+
 try {
-  response = await fetch(
+  const response = await fetch(
     `https://api.segmentapis.com/functions/${FUNCTION_ID}`,
     {
       method: 'PATCH',
