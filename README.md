@@ -21,11 +21,13 @@
 ## To Deploy via GitHub Actions
 
 1. Create GitHub Environments [here](https://github.com/segment-services-eng/destination-function-template/settings/environments) (DEV, QA, PROD, etc)
-   - _`DEV` is enabled by default in the [deployDestinationFunction.yml](https://github.com/segment-services-eng/destination-function-template/blob/main/.github/workflows/deployDestinationFunction.yml) file_
+   - _`DEV` is enabled by default in the [deployDestinationFunction.yml](https://github.com/segment-services-eng/destination-function-template/blob/main/.github/workflows/deployDestinationFunction.yml) file_ (note: this links to the environments in the Template Repo)
+   - Navigate to settings -> environments in your Function Repo
 2. Create Function in Segment Workspace
 3. Create Public API Token to allow for deploying
 4. Add the following Environment Secrets
    - `FUNCTION_ID`
+      - Be sure to include `dfn_`
    - `PUBLIC_API_TOKEN`
 
 ## Deploying to multiple environments
