@@ -28,6 +28,7 @@ async function run() {
   );
   const code = `/**
  * Output from GITHUB ${GITHUB_JOB} Environment
+ * - Last Deployed: ${new Date().toISOString()}
  */
   
 ${functionCode}
