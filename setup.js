@@ -6,10 +6,10 @@ module.exports = async function () {
   globalThis.crypto = require('crypto');
   globalThis.moment = require('moment');
   globalThis.cache = { load: () => {} };
-  globalThis.RetryError = class RetryError extends Error {
-    constructor(message) {
-      super(message);
-      this.name = this.constructor.name;
-    }
-  };
+  // globalThis.RetryError = class RetryError extends Error {
+  //   constructor(message) {
+  //     super(message);
+  //     this.name = this.constructor.name;
+  //   }
+  // };
 };
