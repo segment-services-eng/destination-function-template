@@ -1,3 +1,4 @@
+![Segment_Functions](https://github.com/segment-services-eng/destination-function-template/assets/7215306/4db77bc8-7466-40a0-95ae-5ad7a63cda9d)
 # Destination Function Template
 
 > Base template to deploy your next destination function with
