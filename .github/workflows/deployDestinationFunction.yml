@@ -12,10 +12,10 @@ jobs:
     if: github.ref != 'refs/heads/main' || github.event.label.name == '!!_RELEASE_TO_QA'
     environment: DEV
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
       - name: Install NPM packages
@@ -29,8 +29,8 @@ jobs:
 #     if: github.event.label.name == '!!_RELEASE_TO_QA'
 #     environment: QA
 #     steps:
-#       - uses: actions/checkout@v3
-#       - uses: actions/setup-node@v3
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
 #         with:
 #           node-version-file: '.nvmrc'
 #       - name: Install NPM packages
@@ -44,8 +44,8 @@ jobs:
 #     if: github.ref == 'refs/heads/main'
 #     environment: PROD
 #     steps:
-#       - uses: actions/checkout@v3
-#       - uses: actions/setup-node@v3
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
 #         with:
 #           node-version-file: '.nvmrc'
 #       - name: Install NPM packages
