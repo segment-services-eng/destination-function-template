@@ -1,4 +1,5 @@
 ![Segment_Functions](https://github.com/segment-services-eng/destination-function-template/assets/7215306/4db77bc8-7466-40a0-95ae-5ad7a63cda9d)
+
 # Destination Function Template
 
 > Base template to deploy your next destination function with
@@ -8,7 +9,6 @@
 ## Setup Steps
 
 1. `nvm use` (to get the right version of NodeJS)
-   - As of 2023/02/22, Segment Source & Destination Functions require NodeJS 14.19.3
    - [If needed, install `nvm`](https://github.com/nvm-sh/nvm#install--update-script)
 2. `npm install` (to install npm dependencies)
 
@@ -28,7 +28,7 @@
 3. Create Public API Token to allow for deploying
 4. Add the following Environment Secrets
    - `FUNCTION_ID`
-      - Be sure to include `dfn_`
+     - Be sure to include `dfn_`
    - `PUBLIC_API_TOKEN`
 
 ## Deploying to multiple environments
