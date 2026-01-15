@@ -1,4 +1,26 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
+# Load NVM and set up Node.js environment
+# Support both homebrew and standard NVM installations
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
+  . "/opt/homebrew/opt/nvm/nvm.sh"
+elif [ -s "$NVM_DIR/nvm.sh" ]; then
+  . "$NVM_DIR/nvm.sh"
+fi
+
+# Use Node version from .nvmrc (required Node 22 for this project)
+if command -v nvm >/dev/null 2>&1; then
+  nvm use >/dev/null 2>&1
+fi
+
+# Verify Node 22 is being used
+NODE_VERSION=$(node -v 2>/dev/null | cut -d'.' -f1 | tr -d 'v')
+if [ "$NODE_VERSION" != "22" ]; then
+  echo "Error: Node 22 is required but found Node $NODE_VERSION"
+  echo "Please install Node 22 and ensure it's active (e.g., 'nvm install 22 && nvm use 22')"
+  exit 1
+fi
+
+npx lint-staged
 npm test
