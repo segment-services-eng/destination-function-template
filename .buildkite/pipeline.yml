@@ -3,6 +3,11 @@
 # Pipeline activation (creating the pipeline, the GitHub webhook, and the agent
 # queue) is configured in the Buildkite UI — not here.
 #
+# Steps run inside Twilio's internal base-node image from registry.twilio.com
+# (the general-* agents can't reach Docker Hub). This mirrors the convention used
+# by other Node deploy pipelines on this cluster, e.g.
+# twilio-internal/enterprise-provisioning-serverless.
+#
 # Required secrets, expected as environment variables on the agent:
 #   - FUNCTION_ID       Segment function id (must include the `dfn_` prefix)
 #   - PUBLIC_API_TOKEN  Segment Public API token used to deploy
@@ -22,11 +27,11 @@ steps:
   - label: ':jest: Install & Test'
     key: test
     # The general-* agents are bare hosts without Node/npm on the PATH, but they
-    # do provide Docker. Run the build inside a pinned Node image instead of
-    # relying on host-installed tooling.
+    # do provide Docker. Run the build inside Twilio's internal base-node image
+    # (Docker Hub is not reachable from these agents; registry.twilio.com is).
     plugins:
-      - docker#v5.11.0:
-          image: 'node:22'
+      - docker#v5.9.0:
+          image: 'registry.twilio.com/library/base-node/22:22'
           command: ['sh', '-c', 'npm ci && npm test']
 
   - wait
@@ -39,8 +44,8 @@ steps:
     env:
       DEPLOY_ENV: DEV
     plugins:
-      - docker#v5.11.0:
-          image: 'node:22'
+      - docker#v5.9.0:
+          image: 'registry.twilio.com/library/base-node/22:22'
           command:
             ['sh', '-c', 'npm ci && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict']
           # Pass deploy config/secrets from the agent environment into the container.
@@ -64,8 +69,8 @@ steps:
   #   env:
   #     DEPLOY_ENV: QA
   #   plugins:
-  #     - docker#v5.11.0:
-  #         image: 'node:22'
+  #     - docker#v5.9.0:
+  #         image: 'registry.twilio.com/library/base-node/22:22'
   #         command:
   #           ['sh', '-c', 'npm ci && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict']
   #         environment:
@@ -83,8 +88,8 @@ steps:
   #   env:
   #     DEPLOY_ENV: PROD
   #   plugins:
-  #     - docker#v5.11.0:
-  #         image: 'node:22'
+  #     - docker#v5.9.0:
+  #         image: 'registry.twilio.com/library/base-node/22:22'
   #         command:
   #           ['sh', '-c', 'npm ci && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict']
   #         environment:
