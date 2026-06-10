@@ -29,11 +29,15 @@ environment via `scripts/deployDestinationFunction.js`.
    the `default` queue).
 2. Create the Function in your Segment Workspace.
 3. Create a Public API Token to allow for deploying.
-4. Add the following secrets to the pipeline (exposed as environment variables on
-   the agent):
+4. Add the following secrets under **Pipelines → Clusters → _your cluster_ →
+   Secrets**. The pipeline reads them at runtime via `buildkite-agent secret get`,
+   so they never appear in the UI or build logs:
    - `FUNCTION_ID`
      - Be sure to include `dfn_`
    - `PUBLIC_API_TOKEN`
+   - _If your agents are self-hosted and inject these via Vault or an environment
+     hook instead, remove the `buildkite-agent secret get` exports from
+     `.buildkite/pipeline.yml`._
 
 ## Deploying to multiple environments
 
