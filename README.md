@@ -25,19 +25,19 @@ The pipeline is defined in [`.buildkite/pipeline.yml`](.buildkite/pipeline.yml).
 installs dependencies, runs tests, then deploys the function to the target
 environment via `scripts/deployDestinationFunction.js`.
 
-1. Create a Buildkite pipeline pointed at this repo (GitHub webhook + an agent on
-   the `default` queue).
+1. Create a Buildkite pipeline pointed at this repo (GitHub webhook + a queue with
+   connected agents). On the `twilio-primary-default` cluster, use a live
+   general-purpose queue such as `general-001` — the `default` queue is paused and
+   has no agents, so jobs sent there hang in "queuing".
 2. Create the Function in your Segment Workspace.
 3. Create a Public API Token to allow for deploying.
-4. Add the following secrets under **Pipelines → Clusters → _your cluster_ →
-   Secrets**. The pipeline reads them at runtime via `buildkite-agent secret get`,
-   so they never appear in the UI or build logs:
+4. Make the following available to builds as environment variables on the agent:
    - `FUNCTION_ID`
      - Be sure to include `dfn_`
    - `PUBLIC_API_TOKEN`
-   - _If your agents are self-hosted and inject these via Vault or an environment
-     hook instead, remove the `buildkite-agent secret get` exports from
-     `.buildkite/pipeline.yml`._
+   - _The SSC-managed agents inject secrets via the agent environment (e.g. Vault),
+     not a Buildkite Secrets store. Follow the internal SSC process to provision
+     these for this pipeline._
 
 ## Deploying to multiple environments
 
