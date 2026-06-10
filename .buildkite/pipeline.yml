@@ -3,18 +3,20 @@
 # Pipeline activation (creating the pipeline, the GitHub webhook, and the agent
 # queue) is configured in the Buildkite UI — not here.
 #
-# Required secrets, stored as Buildkite cluster Secrets and read at runtime via
-# `buildkite-agent secret get` (so they never appear in the pipeline UI or logs):
+# Required secrets, expected as environment variables on the agent:
 #   - FUNCTION_ID       Segment function id (must include the `dfn_` prefix)
 #   - PUBLIC_API_TOKEN  Segment Public API token used to deploy
 #
-# Add them under: Pipelines → Clusters → <your cluster> → Secrets.
-# If your agents are self-hosted and instead inject these via Vault / an
-# environment hook, you can drop the `secret get` exports below and rely on the
-# values already being present in the environment.
+# The twilio-primary-default cluster uses self-hosted (SSC-managed) agents and has
+# no Buildkite Secrets store, so these are injected by the agent environment
+# (e.g. Vault). Follow the internal SSC process to make them available to builds
+# on this pipeline.
 
 agents:
-  queue: default
+  # Must be a queue with connected agents on the twilio-primary-default cluster.
+  # The `default` queue is paused / has no agents — jobs sent there hang in
+  # "queuing" forever. `general-001` is a live general-purpose pool.
+  queue: general-001
 
 steps:
   - label: ':jest: Install & Test'
@@ -34,8 +36,6 @@ steps:
       DEPLOY_ENV: DEV
     command:
       - npm ci
-      - export FUNCTION_ID="$(buildkite-agent secret get FUNCTION_ID)"
-      - export PUBLIC_API_TOKEN="$(buildkite-agent secret get PUBLIC_API_TOKEN)"
       - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
 
   # ---------------------------------------------------------------------------
@@ -55,8 +55,6 @@ steps:
   #   command:
   #     - npm ci
   #     - npm test
-  #     - export FUNCTION_ID="$(buildkite-agent secret get FUNCTION_ID)"
-  #     - export PUBLIC_API_TOKEN="$(buildkite-agent secret get PUBLIC_API_TOKEN)"
   #     - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
   #
   # - block: ':raised_hand: Release to PROD'
@@ -71,6 +69,4 @@ steps:
   #   command:
   #     - npm ci
   #     - npm test
-  #     - export FUNCTION_ID="$(buildkite-agent secret get FUNCTION_ID)"
-  #     - export PUBLIC_API_TOKEN="$(buildkite-agent secret get PUBLIC_API_TOKEN)"
   #     - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
