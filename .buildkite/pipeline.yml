@@ -21,9 +21,13 @@ agents:
 steps:
   - label: ':jest: Install & Test'
     key: test
-    command:
-      - npm ci
-      - npm test
+    # The general-* agents are bare hosts without Node/npm on the PATH, but they
+    # do provide Docker. Run the build inside a pinned Node image instead of
+    # relying on host-installed tooling.
+    plugins:
+      - docker#v5.11.0:
+          image: 'node:22'
+          command: ['sh', '-c', 'npm ci && npm test']
 
   - wait
 
@@ -34,9 +38,16 @@ steps:
     branches: '!main'
     env:
       DEPLOY_ENV: DEV
-    command:
-      - npm ci
-      - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
+    plugins:
+      - docker#v5.11.0:
+          image: 'node:22'
+          command:
+            ['sh', '-c', 'npm ci && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict']
+          # Pass deploy config/secrets from the agent environment into the container.
+          environment:
+            - DEPLOY_ENV
+            - FUNCTION_ID
+            - PUBLIC_API_TOKEN
 
   # ---------------------------------------------------------------------------
   # Multi-environment promotion (uncomment to enable). Mirrors the QA/PROD jobs
@@ -52,10 +63,15 @@ steps:
   #   branches: 'main'
   #   env:
   #     DEPLOY_ENV: QA
-  #   command:
-  #     - npm ci
-  #     - npm test
-  #     - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
+  #   plugins:
+  #     - docker#v5.11.0:
+  #         image: 'node:22'
+  #         command:
+  #           ['sh', '-c', 'npm ci && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict']
+  #         environment:
+  #           - DEPLOY_ENV
+  #           - FUNCTION_ID
+  #           - PUBLIC_API_TOKEN
   #
   # - block: ':raised_hand: Release to PROD'
   #   prompt: 'Promote this build to the PROD environment?'
@@ -66,7 +82,12 @@ steps:
   #   branches: 'main'
   #   env:
   #     DEPLOY_ENV: PROD
-  #   command:
-  #     - npm ci
-  #     - npm test
-  #     - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
+  #   plugins:
+  #     - docker#v5.11.0:
+  #         image: 'node:22'
+  #         command:
+  #           ['sh', '-c', 'npm ci && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict']
+  #         environment:
+  #           - DEPLOY_ENV
+  #           - FUNCTION_ID
+  #           - PUBLIC_API_TOKEN
