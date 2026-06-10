@@ -1,7 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { GITHUB_JOB, FUNCTION_ID, PUBLIC_API_TOKEN } = process.env;
+// DEPLOY_ENV identifies the target environment (DEV/QA/PROD) and is CI-agnostic.
+// GITHUB_JOB is kept as a fallback for backward compatibility with older runs.
+const { DEPLOY_ENV, GITHUB_JOB, FUNCTION_ID, PUBLIC_API_TOKEN } = process.env;
+const deployEnv = DEPLOY_ENV || GITHUB_JOB || 'UNKNOWN';
 
 /**
  * Implement Fetch w/ Retries
@@ -27,7 +30,7 @@ async function run() {
     'utf8'
   );
   const code = `/**
- * Output from GITHUB ${GITHUB_JOB} Environment
+ * Deployed to ${deployEnv} environment
  * - Last Deployed: ${new Date().toISOString()}
  */
   

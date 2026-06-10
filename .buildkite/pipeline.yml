@@ -1,0 +1,64 @@
+# Buildkite pipeline for deploying a Segment destination function.
+#
+# Pipeline activation (creating the pipeline, the GitHub webhook, the agent
+# queue, and the secrets below) is configured in the Buildkite UI — not here.
+#
+# Required secrets, exposed as environment variables on the agent:
+#   - FUNCTION_ID       Segment function id (must include the `dfn_` prefix)
+#   - PUBLIC_API_TOKEN  Segment Public API token used to deploy
+
+agents:
+  queue: default
+
+steps:
+  - label: ':jest: Install & Test'
+    key: test
+    command:
+      - npm ci
+      - npm test
+
+  - wait
+
+  - label: ':rocket: Deploy to DEV'
+    key: deploy-dev
+    depends_on: test
+    # Feature branches deploy to DEV; main is reserved for promotion below.
+    branches: '!main'
+    env:
+      DEPLOY_ENV: DEV
+    command:
+      - npm ci
+      - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
+
+  # ---------------------------------------------------------------------------
+  # Multi-environment promotion (uncomment to enable). Mirrors the QA/PROD jobs
+  # from the old GitHub Actions workflow. In Buildkite, promotion is gated by a
+  # manual `block` step rather than a `!!_RELEASE_TO_QA` pull request label.
+  # ---------------------------------------------------------------------------
+  # - block: ':raised_hand: Release to QA'
+  #   prompt: 'Promote this build to the QA environment?'
+  #   branches: 'main'
+  #
+  # - label: ':rocket: Deploy to QA'
+  #   key: deploy-qa
+  #   branches: 'main'
+  #   env:
+  #     DEPLOY_ENV: QA
+  #   command:
+  #     - npm ci
+  #     - npm test
+  #     - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict
+  #
+  # - block: ':raised_hand: Release to PROD'
+  #   prompt: 'Promote this build to the PROD environment?'
+  #   branches: 'main'
+  #
+  # - label: ':rocket: Deploy to PROD'
+  #   key: deploy-prod
+  #   branches: 'main'
+  #   env:
+  #     DEPLOY_ENV: PROD
+  #   command:
+  #     - npm ci
+  #     - npm test
+  #     - node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict

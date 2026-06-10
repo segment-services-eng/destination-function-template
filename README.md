@@ -16,31 +16,39 @@
 
 `npm run test`
 
-- GitHub Actions workflow also runs tests before deploying
+- The Buildkite pipeline also runs tests before deploying
 - Tests are created in `src/index.test.js`
 
-## To Deploy via GitHub Actions
+## To Deploy via Buildkite
 
-1. Create GitHub Environments [here](https://github.com/segment-services-eng/destination-function-template/settings/environments) (DEV, QA, PROD, etc)
-   - _`DEV` is enabled by default in the [deployDestinationFunction.yml](https://github.com/segment-services-eng/destination-function-template/blob/main/.github/workflows/deployDestinationFunction.yml) file_ (note: this links to the environments in the Template Repo)
-   - Navigate to settings -> environments in your Function Repo
-2. Create Function in Segment Workspace
-3. Create Public API Token to allow for deploying
-4. Add the following Environment Secrets
+The pipeline is defined in [`.buildkite/pipeline.yml`](.buildkite/pipeline.yml). It
+installs dependencies, runs tests, then deploys the function to the target
+environment via `scripts/deployDestinationFunction.js`.
+
+1. Create a Buildkite pipeline pointed at this repo (GitHub webhook + an agent on
+   the `default` queue).
+2. Create the Function in your Segment Workspace.
+3. Create a Public API Token to allow for deploying.
+4. Add the following secrets to the pipeline (exposed as environment variables on
+   the agent):
    - `FUNCTION_ID`
      - Be sure to include `dfn_`
    - `PUBLIC_API_TOKEN`
 
 ## Deploying to multiple environments
 
-1. Once changes look good in the DEV environment, uncomment the QA section from the deployDestinationFunction.yml file.
-2. Push changes to your branch
-3. Add the label `!!_RELEASE_TO_QA` to the PR to deploy it to QA
+The pipeline deploys feature branches to `DEV` automatically. To promote to QA/PROD:
+
+1. Uncomment the QA/PROD `block` and deploy steps in `.buildkite/pipeline.yml`.
+2. Push your changes.
+3. On a `main` build, unblock the `Release to QA` (then `Release to PROD`) step in
+   the Buildkite UI to promote the deploy. The target environment is selected via
+   the `DEPLOY_ENV` variable on each step.
 
 ## Tooling Included
 
 1. [Jest for code testing](https://jestjs.io/docs/expect)
 2. [Prettier for code formatting](https://prettier.io/)
 3. [ESLint for code linting](https://eslint.org/)
-4. [GitHub Actions script for function deploy](https://docs.github.com/en/actions)
+4. [Buildkite pipeline for function deploy](https://buildkite.com/docs/pipelines)
 5. [Husky for commit validation](https://github.com/typicode/husky)
