@@ -24,22 +24,6 @@ agents:
   queue: general-001
 
 steps:
-  # TEMP DIAGNOSTIC — remove once the 403 is understood. The deploy token works
-  # from a laptop (GET/PATCH both 200), so a 403 from the agent points at the
-  # network path (egress proxy / firewall) rather than auth. This probes that.
-  - label: ':mag: DEBUG egress to Segment'
-    key: debug-egress
-    command: |
-      echo '--- proxy env on host'
-      env | grep -iE 'proxy' || echo '(no proxy vars set)'
-      echo '--- host: GET api.segmentapis.com (status + any proxy/WAF body)'
-      curl -sS -D - -o /dev/null --max-time 20 https://api.segmentapis.com/ || echo "host curl failed: $?"
-      echo '--- inside node:22 container (same way deploy runs)'
-      docker run --rm registry.twilio.com/library/base-node/22:22 sh -c \
-        "curl -sS -D - -o /dev/null --max-time 20 https://api.segmentapis.com/ || echo container-curl-failed=\$?"
-
-  - wait
-
   - label: ':jest: Install & Test'
     key: test
     # The general-* agents are bare hosts without Node/npm on the PATH, but they
