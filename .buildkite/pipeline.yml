@@ -32,7 +32,9 @@ steps:
     plugins:
       - docker#v5.9.0:
           image: 'registry.twilio.com/library/base-node/22:22'
-          command: ['sh', '-c', 'npm ci && npm test']
+          # HUSKY=0 skips the `prepare` git-hook install (the base image has no
+          # git, and hooks are pointless in CI) — keeps logs free of noise.
+          command: ['sh', '-c', 'HUSKY=0 npm ci && npm test']
 
   - wait
 
@@ -56,6 +58,7 @@ steps:
       docker run --rm \
         -v "$$PWD":/workdir -w /workdir \
         -e DEPLOY_ENV \
+        -e HUSKY=0 \
         -e FUNCTION_ID="$$FUNCTION_ID" \
         -e PUBLIC_API_TOKEN="$$PUBLIC_API_TOKEN" \
         registry.twilio.com/library/base-node/22:22 \
@@ -83,6 +86,7 @@ steps:
   #     docker run --rm \
   #       -v "$$PWD":/workdir -w /workdir \
   #       -e DEPLOY_ENV \
+  #       -e HUSKY=0 \
   #       -e FUNCTION_ID="$$FUNCTION_ID" \
   #       -e PUBLIC_API_TOKEN="$$PUBLIC_API_TOKEN" \
   #       registry.twilio.com/library/base-node/22:22 \
@@ -105,6 +109,7 @@ steps:
   #     docker run --rm \
   #       -v "$$PWD":/workdir -w /workdir \
   #       -e DEPLOY_ENV \
+  #       -e HUSKY=0 \
   #       -e FUNCTION_ID="$$FUNCTION_ID" \
   #       -e PUBLIC_API_TOKEN="$$PUBLIC_API_TOKEN" \
   #       registry.twilio.com/library/base-node/22:22 \
