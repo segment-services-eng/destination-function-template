@@ -31,13 +31,20 @@ environment via `scripts/deployDestinationFunction.js`.
    has no agents, so jobs sent there hang in "queuing".
 2. Create the Function in your Segment Workspace.
 3. Create a Public API Token to allow for deploying.
-4. Make the following available to builds as environment variables on the agent:
-   - `FUNCTION_ID`
-     - Be sure to include `dfn_`
-   - `PUBLIC_API_TOKEN`
-   - _The SSC-managed agents inject secrets via the agent environment (e.g. Vault),
-     not a Buildkite Secrets store. Follow the internal SSC process to provision
-     these for this pipeline._
+4. Store the deploy secrets in **AWS Secrets Manager** as a single JSON secret and
+   let the pipeline read them at deploy time by assuming an IAM role via the
+   Buildkite OIDC provider (no static keys, no Buildkite-stored secrets):
+   - Secret `segment/destination-function-template` (region `us-west-2`,
+     account `058449100246`) with shape:
+     ```json
+     { "FUNCTION_ID": "dfn_...", "PUBLIC_API_TOKEN": "..." }
+     ```
+   - IAM role `twilio-internal_destination-function-template` is assumed by the
+     `aws-assume-role-with-web-identity` plugin; its trust policy is scoped to this
+     pipeline's slug and it may only read this one secret.
+   - The deploy step sources [`.buildkite/fetch-secrets.sh`](.buildkite/fetch-secrets.sh)
+     to load them. See the internal "Assuming IAM Roles" guide to reproduce this
+     for a new function repo (new secret + new role scoped to the new slug).
 
 ## Deploying to multiple environments
 
