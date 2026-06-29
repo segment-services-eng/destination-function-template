@@ -30,7 +30,7 @@ steps:
     # do provide Docker. Run the build inside Twilio's internal base-node image
     # (Docker Hub is not reachable from these agents; registry.twilio.com is).
     plugins:
-      - docker#v5.9.0:
+      - docker#v5.13.0:
           image: 'registry.twilio.com/library/base-node/22:22'
           # HUSKY=0 skips the `prepare` git-hook install (the base image has no
           # git, and hooks are pointless in CI) — keeps logs free of noise.
@@ -51,7 +51,7 @@ steps:
     # $$VAR escapes runtime shell vars so Buildkite does not interpolate them at
     # pipeline-upload time.
     plugins:
-      - aws-assume-role-with-web-identity#v1.4.0:
+      - aws-assume-role-with-web-identity#v1.6.0:
           role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
     command: |
       source .buildkite/fetch-secrets.sh
@@ -79,7 +79,7 @@ steps:
   #   env:
   #     DEPLOY_ENV: QA
   #   plugins:
-  #     - aws-assume-role-with-web-identity#v1.4.0:
+  #     - aws-assume-role-with-web-identity#v1.6.0:
   #         role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
   #   command: |
   #     source .buildkite/fetch-secrets.sh
@@ -102,7 +102,7 @@ steps:
   #   env:
   #     DEPLOY_ENV: PROD
   #   plugins:
-  #     - aws-assume-role-with-web-identity#v1.4.0:
+  #     - aws-assume-role-with-web-identity#v1.6.0:
   #         role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
   #   command: |
   #     source .buildkite/fetch-secrets.sh
