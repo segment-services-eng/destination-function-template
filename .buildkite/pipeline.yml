@@ -1,116 +1,94 @@
-# Buildkite pipeline for deploying a Segment destination function.
+# Buildkite pipeline for deploying the destination-function-template Segment
+# Destination Function.
 #
-# Pipeline activation (creating the pipeline, the GitHub webhook, and the agent
-# queue) is configured in the Buildkite UI — not here.
+# Environments (mirrors the JPMC destination-function release procedure):
+#   * DEV  — runs on feature-branch builds (not main).
+#   * QA   — runs when the PR carries the !!_RELEASE_TO_QA label.
+#   * PROD — runs on the main branch.
 #
-# Steps run inside Twilio's internal base-node image from registry.twilio.com
-# (the general-* agents can't reach Docker Hub). This mirrors the convention used
-# by other Node deploy pipelines on this cluster, e.g.
-# twilio-internal/enterprise-provisioning-serverless.
+# Each env step runs the FULL gate for that environment: install -> test ->
+# deploy. Test runs inside every env step, so each promotion re-validates.
 #
-# Deploy secrets (FUNCTION_ID, PUBLIC_API_TOKEN) live in AWS Secrets Manager:
-#   secret  : segment/destination-function-template  (region us-west-2)
-#   account : 058449100246
-# The deploy step assumes an IAM role via the Buildkite OIDC provider
-# (aws-assume-role-with-web-identity), then reads the secret with the AWS CLI.
-# No static AWS keys or Buildkite-stored secrets are involved. The IAM role's
-# trust policy is scoped to this pipeline's slug (destination-function-template).
-# This follows the internal "Assuming IAM Roles" guide.
+# Commit statuses are published per-step using the step KEY as the context
+# (use_step_key_as_commit_status), so GitHub shows buildkite/<slug>/dev, /qa,
+# /prod (lowercased). A skipped step (filtered by `if:`/branches) publishes no
+# status, so an un-run QA correctly leaves merge blocked until the
+# !!_RELEASE_TO_QA label triggers it.
+#
+# Unlike the JPMC fleet (three AWS accounts), the template deploys ALL envs from
+# ONE account (058449100246). The per-env FUNCTION_ID and the shared
+# PUBLIC_API_TOKEN are read from AWS Secrets Manager by .buildkite/fetch-secrets.sh
+# (see that file for the secret names). Each step assumes the same IAM role via
+# the agent.buildkite.com OIDC provider, then reads the secrets. The node runs
+# in Twilio's internal base-node image (Docker Hub is not reachable from the
+# agents; registry.twilio.com is). HUSKY=0 skips the git-hook install.
+#
+# `set -euo pipefail` + the chained `&&` make any failure (failed secret fetch,
+# test failure, deploy error) fail the step hard, so a broken build never
+# proceeds to deploy or reports a green status.
 
 agents:
   # Must be a queue with connected agents on the twilio-primary-default cluster.
-  # The `default` queue is paused / has no agents — jobs sent there hang in
-  # "queuing" forever. `general-001` is a live general-purpose pool.
+  # The `default` queue is paused / has no agents.
   queue: general-001
 
 steps:
-  - label: ':jest: Install & Test'
-    key: test
-    # The general-* agents are bare hosts without Node/npm on the PATH, but they
-    # do provide Docker. Run the build inside Twilio's internal base-node image
-    # (Docker Hub is not reachable from these agents; registry.twilio.com is).
-    plugins:
-      - docker#v5.13.0:
-          image: 'registry.twilio.com/library/base-node/22:22'
-          # HUSKY=0 skips the `prepare` git-hook install (the base image has no
-          # git, and hooks are pointless in CI) — keeps logs free of noise.
-          command: ['sh', '-c', 'HUSKY=0 npm ci && npm test']
-
-  - wait
-
-  - label: ':rocket: Deploy to DEV'
-    key: deploy-dev
-    depends_on: test
-    # Feature branches deploy to DEV; main is reserved for promotion below.
+  - label: ':rocket: DEV'
+    key: DEV
     branches: '!main'
     env:
       DEPLOY_ENV: DEV
-    # The assume-role plugin sets temporary AWS credentials on the agent. We then
-    # read the secret with the AWS CLI on the host and pass the two values into
-    # the node container (node:22 has no AWS CLI, so the fetch must happen first).
-    # $$VAR escapes runtime shell vars so Buildkite does not interpolate them at
-    # pipeline-upload time.
     plugins:
       - aws-assume-role-with-web-identity#v1.6.0:
           role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
     command: |
+      set -euo pipefail
       source .buildkite/fetch-secrets.sh
       docker run --rm \
         -v "$$PWD":/workdir -w /workdir \
         -e DEPLOY_ENV \
         -e HUSKY=0 \
-        -e FUNCTION_ID="$$FUNCTION_ID" \
-        -e PUBLIC_API_TOKEN="$$PUBLIC_API_TOKEN" \
+        -e FUNCTION_ID \
+        -e PUBLIC_API_TOKEN \
         registry.twilio.com/library/base-node/22:22 \
-        sh -c 'npm ci && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict'
+        sh -c 'npm ci --no-audit --no-fund --loglevel=error && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict'
 
-  # ---------------------------------------------------------------------------
-  # Multi-environment promotion (uncomment to enable). Mirrors the QA/PROD jobs
-  # from the old GitHub Actions workflow. In Buildkite, promotion is gated by a
-  # manual `block` step rather than a `!!_RELEASE_TO_QA` pull request label.
-  # ---------------------------------------------------------------------------
-  # - block: ':raised_hand: Release to QA'
-  #   prompt: 'Promote this build to the QA environment?'
-  #   branches: 'main'
-  #
-  # - label: ':rocket: Deploy to QA'
-  #   key: deploy-qa
-  #   branches: 'main'
-  #   env:
-  #     DEPLOY_ENV: QA
-  #   plugins:
-  #     - aws-assume-role-with-web-identity#v1.6.0:
-  #         role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
-  #   command: |
-  #     source .buildkite/fetch-secrets.sh
-  #     docker run --rm \
-  #       -v "$$PWD":/workdir -w /workdir \
-  #       -e DEPLOY_ENV \
-  #       -e HUSKY=0 \
-  #       -e FUNCTION_ID="$$FUNCTION_ID" \
-  #       -e PUBLIC_API_TOKEN="$$PUBLIC_API_TOKEN" \
-  #       registry.twilio.com/library/base-node/22:22 \
-  #       sh -c 'npm ci && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict'
-  #
-  # - block: ':raised_hand: Release to PROD'
-  #   prompt: 'Promote this build to the PROD environment?'
-  #   branches: 'main'
-  #
-  # - label: ':rocket: Deploy to PROD'
-  #   key: deploy-prod
-  #   branches: 'main'
-  #   env:
-  #     DEPLOY_ENV: PROD
-  #   plugins:
-  #     - aws-assume-role-with-web-identity#v1.6.0:
-  #         role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
-  #   command: |
-  #     source .buildkite/fetch-secrets.sh
-  #     docker run --rm \
-  #       -v "$$PWD":/workdir -w /workdir \
-  #       -e DEPLOY_ENV \
-  #       -e HUSKY=0 \
-  #       -e FUNCTION_ID="$$FUNCTION_ID" \
-  #       -e PUBLIC_API_TOKEN="$$PUBLIC_API_TOKEN" \
-  #       registry.twilio.com/library/base-node/22:22 \
-  #       sh -c 'npm ci && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict'
+  - label: ':rocket: QA'
+    key: QA
+    if: build.pull_request.labels includes "!!_RELEASE_TO_QA"
+    env:
+      DEPLOY_ENV: QA
+    plugins:
+      - aws-assume-role-with-web-identity#v1.6.0:
+          role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
+    command: |
+      set -euo pipefail
+      source .buildkite/fetch-secrets.sh
+      docker run --rm \
+        -v "$$PWD":/workdir -w /workdir \
+        -e DEPLOY_ENV \
+        -e HUSKY=0 \
+        -e FUNCTION_ID \
+        -e PUBLIC_API_TOKEN \
+        registry.twilio.com/library/base-node/22:22 \
+        sh -c 'npm ci --no-audit --no-fund --loglevel=error && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict'
+
+  - label: ':rocket: PROD'
+    key: PROD
+    if: build.branch == "main"
+    env:
+      DEPLOY_ENV: PROD
+    plugins:
+      - aws-assume-role-with-web-identity#v1.6.0:
+          role-arn: arn:aws:iam::058449100246:role/twilio-internal_destination-function-template
+    command: |
+      set -euo pipefail
+      source .buildkite/fetch-secrets.sh
+      docker run --rm \
+        -v "$$PWD":/workdir -w /workdir \
+        -e DEPLOY_ENV \
+        -e HUSKY=0 \
+        -e FUNCTION_ID \
+        -e PUBLIC_API_TOKEN \
+        registry.twilio.com/library/base-node/22:22 \
+        sh -c 'npm ci --no-audit --no-fund --loglevel=error && npm test && node ./scripts/deployDestinationFunction.js --unhandled-rejections=strict'
