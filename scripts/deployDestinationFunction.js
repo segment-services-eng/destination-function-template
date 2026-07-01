@@ -1,28 +1,18 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const { fetchWithRetry } = require('./lib/fetchWithRetry');
 // DEPLOY_ENV identifies the target environment (DEV/QA/PROD) and is CI-agnostic.
 // GITHUB_JOB is kept as a fallback for backward compatibility with older runs.
 const { DEPLOY_ENV, GITHUB_JOB, FUNCTION_ID, PUBLIC_API_TOKEN } = process.env;
-const deployEnv = DEPLOY_ENV || GITHUB_JOB || 'UNKNOWN';
-
-/**
- * Implement Fetch w/ Retries
- */
-const nodeFetch = require('node-fetch');
-const fetch = require('fetch-retry')(nodeFetch);
-const fetchRetryOptions = {
-  retries: 12,
-  retryDelay: attempt => Math.pow(2, attempt) * 1000, // 1000, 2000, 4000
-  retryOn: (attempt, error, response) => {
-    const { status, statusText } = response;
-    // retry on any network error, or 4xx or 5xx status codes
-    if (error !== null || status >= 400) {
-      console.log(`Response ${status} ${statusText}. Retry, ${attempt + 1}/12`);
-      return true;
-    }
-  }
-};
+// `deployEnv` is interpolated into the generated function's comment header, so
+// restrict it to a known allowlist. This prevents a crafted value (e.g. one
+// containing `*/`) from breaking out of the comment and injecting code.
+const ALLOWED_ENVS = ['DEV', 'QA', 'PROD'];
+const rawDeployEnv = DEPLOY_ENV || GITHUB_JOB || 'UNKNOWN';
+const deployEnv = ALLOWED_ENVS.includes(rawDeployEnv)
+  ? rawDeployEnv
+  : 'UNKNOWN';
 
 async function run() {
   const functionCode = fs.readFileSync(
@@ -33,7 +23,7 @@ async function run() {
  * Output from ${deployEnv} Buildkite deploy
  * - Last Deployed: ${new Date().toISOString()}
  */
-  
+
 ${functionCode}
   `;
   /**
@@ -47,20 +37,22 @@ ${functionCode}
   /**
    * Push to Function Instance
    */
-
   try {
     const headers = {
       Authorization: `Bearer ${PUBLIC_API_TOKEN}`,
       'Content-Type': 'application/json'
     };
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `https://api.segmentapis.com/functions/${FUNCTION_ID}`,
       {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ code }),
-        ...fetchRetryOptions
-      }
+        body: JSON.stringify({ code })
+      },
+      // The deployed code payload can be large; allow well beyond the default
+      // timeout so the upload isn't aborted mid-flight and retried (which can
+      // orphan a partially-created version).
+      { timeoutMs: 120000 }
     );
     console.log(`Response: ${response.status} ${response.statusText}`);
 
@@ -68,17 +60,19 @@ ${functionCode}
       const result = await response.json();
       if (result.errors) {
         console.log(result);
-        throw new Error(result.errors);
+        process.exit(1);
       }
       if (result.data.function.deployedAt) {
         const { deployedAt } = result.data.function;
         console.log(`Successfully Pushed Function Code: ${deployedAt}`);
       }
     } else {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      console.log(`Error: ${response.status} ${response.statusText}`);
+      process.exit(1);
     }
   } catch (error) {
-    throw new Error(error);
+    console.log(error);
+    process.exit(1);
   }
 }
 run();
