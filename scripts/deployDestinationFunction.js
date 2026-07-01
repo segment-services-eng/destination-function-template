@@ -30,7 +30,7 @@ async function run() {
     'utf8'
   );
   const code = `/**
- * Deployed to ${deployEnv} environment
+ * Output from ${deployEnv} Buildkite deploy
  * - Last Deployed: ${new Date().toISOString()}
  */
   
