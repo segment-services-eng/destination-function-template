@@ -12,9 +12,7 @@ module.exports = [
         ...globals.node,
         RetryError: 'readonly',
         _: 'readonly',
-        moment: 'readonly',
-        cache: 'readonly',
-        rules: 'readonly'
+        moment: 'readonly'
       }
     },
     rules: {
