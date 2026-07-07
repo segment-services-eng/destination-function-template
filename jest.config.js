@@ -20,18 +20,31 @@ module.exports = {
   collectCoverage: true,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
-  // collectCoverageFrom: undefined,
+  // Scope coverage to product code only; setup.js is test scaffolding, not shipped source
+  collectCoverageFrom: ['src/**/*.js'],
 
   // The directory where Jest should output its coverage files
   coverageDirectory: 'coverage',
-  // coverageThreshold: { global: { lines: 75 } },
+
+  // An object that configures minimum threshold enforcement for coverage results
+  coverageThreshold: {
+    global: {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100
+    }
+  },
   // An array of regexp pattern strings used to skip coverage collection
   // coveragePathIgnorePatterns: [
   //   "/node_modules/"
   // ],
 
   // Indicates which provider should be used to instrument code for coverage
-  coverageProvider: 'v8',
+  // babel (Istanbul) models default-params / optional-chaining as real two-way
+  // branches; v8 collapses them, hiding uncovered paths. Use babel for honest
+  // branch coverage + parity with Wallaby.
+  coverageProvider: 'babel',
 
   // A list of reporter names that Jest uses when writing coverage reports
   // coverageReporters: [

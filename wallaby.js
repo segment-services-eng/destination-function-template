@@ -1,19 +1,8 @@
-/* eslint-disable no-unused-vars */
-module.exports = function (wallaby) {
+module.exports = function () {
+  // Follow the Jest configuration as the single source of truth: Wallaby
+  // auto-detects jest.config.js (setup.js, coverageProvider, collectCoverageFrom),
+  // so the test globals and coverage settings never drift from the CI run.
   return {
-    files: ['**/src/*.js'],
-    tests: ['**/src/*.test.js'],
-    env: {
-      type: 'node'
-    },
-    setup: function (wallaby) {
-      const btoa = require('btoa');
-      const _ = require('lodash');
-      const moment = require('moment');
-      const crypto = require('crypto');
-      const fetch = require('jest-fetch-mock');
-      fetch.enableMocks();
-    },
-    trace: true
+    autoDetect: ['jest']
   };
 };
