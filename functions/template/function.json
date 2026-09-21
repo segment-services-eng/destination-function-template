@@ -1,0 +1,8 @@
+{
+  "description": "Template function: forwards a track event, optionally enriched with Profile API traits",
+  "functionIds": {
+    "dev": "",
+    "qa": "",
+    "prod": ""
+  }
+}

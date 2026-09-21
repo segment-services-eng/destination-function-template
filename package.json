@@ -18,10 +18,10 @@
       "prettier --write"
     ]
   },
-  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "btoa": "^1.2.1",
+    "esbuild": "^0.28.2",
     "eslint": "^10.6.0",
     "eslint-plugin-jest": "^29.15.4",
     "globals": "^17.7.0",
@@ -35,6 +35,9 @@
   },
   "scripts": {
     "test": "jest",
+    "functions": "node scripts/listFunctions.js",
+    "new:function": "node scripts/newFunction.js",
+    "bundle": "node scripts/printBundle.js",
     "prepare": "husky"
   }
 }

@@ -20,8 +20,10 @@ module.exports = {
   collectCoverage: true,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
-  // Scope coverage to product code only; setup.js is test scaffolding, not shipped source
-  collectCoverageFrom: ['src/**/*.js'],
+  // Scope coverage to the code that ships inside a function bundle: the handlers
+  // and the shared lib/ they inline. Build tooling under scripts/ is tested (see
+  // scripts/bundle.test.js) but deliberately not held to the 100% threshold.
+  collectCoverageFrom: ['functions/**/*.js', 'lib/**/*.js'],
 
   // The directory where Jest should output its coverage files
   coverageDirectory: 'coverage',

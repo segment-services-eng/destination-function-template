@@ -3,6 +3,7 @@ const jest = require('eslint-plugin-jest');
 const globals = require('globals');
 
 module.exports = [
+  { ignores: ['coverage/**'] },
   js.configs.recommended,
   {
     languageOptions: {
@@ -22,8 +23,9 @@ module.exports = [
       'no-unused-vars': [
         'error',
         {
-          varsIgnorePattern: '^onTrack$',
-          argsIgnorePattern: '^_+$',
+          // Handlers are exported from their module and consumed by the bundler,
+          // so they need no ignore pattern of their own.
+          argsIgnorePattern: '^_',
           // eslint 9+ changed the default to 'all'; keep the eslint 8 behavior
           // of not flagging unused catch bindings so existing code is unchanged.
           caughtErrors: 'none'
