@@ -71,9 +71,13 @@ async function run() {
   const name = resolveFunctionName();
   const functionId = resolveFunctionId(name);
 
-  // A missing token is a configuration error, not a transient one. Without this
-  // check the request 403s and fetchWithRetry spends seven backed-off retries
-  // rediscovering that, once per function in the deploy matrix.
+  // An unset token cannot become set mid-run — it is read from the environment
+  // once, at module load — so no number of attempts can make this request
+  // succeed. Report it as the configuration error it is.
+  //
+  // This says nothing about 403s from a real token: those stay retryable in
+  // fetchWithRetry, because a token can legitimately be rejected while a
+  // permission change propagates.
   if (!PUBLIC_API_TOKEN) {
     throw new Error(
       'PUBLIC_API_TOKEN is not set. In GitHub Actions it comes from the environment secret; in Buildkite from .buildkite/fetch-secrets.sh.'
