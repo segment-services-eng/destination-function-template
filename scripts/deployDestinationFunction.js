@@ -71,6 +71,15 @@ async function run() {
   const name = resolveFunctionName();
   const functionId = resolveFunctionId(name);
 
+  // A missing token is a configuration error, not a transient one. Without this
+  // check the request 403s and fetchWithRetry spends seven backed-off retries
+  // rediscovering that, once per function in the deploy matrix.
+  if (!PUBLIC_API_TOKEN) {
+    throw new Error(
+      'PUBLIC_API_TOKEN is not set. In GitHub Actions it comes from the environment secret; in Buildkite from .buildkite/fetch-secrets.sh.'
+    );
+  }
+
   // Shared lib/ code is inlined here; the sandbox has no module system at
   // runtime. See scripts/bundle.js.
   const functionCode = await bundleFunction(name);

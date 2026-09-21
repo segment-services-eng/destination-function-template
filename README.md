@@ -75,6 +75,20 @@ To see exactly what would be uploaded:
 npm run bundle -- template
 ```
 
+### Worked example
+
+[**destination-function-monorepo-example**](https://github.com/JasonSooter/destination-function-monorepo-example)
+is a read-only reference repo built from this template: four realistic functions —
+a profile-enriched webhook forwarder, an Engage audience CRM sync, a marketing
+triggered send and an analytics forwarder — sharing seven `lib/` helpers including
+`queryProfileAPI`.
+
+It is worth reading for two things this README can only assert: that each bundle
+carries **only** the lib modules its own function reaches (the analytics forwarder's
+deployed code contains no Profile API code at all), and a live GitHub Actions run
+showing four deploy legs fanning out from a filesystem scan with no function named
+anywhere in the workflow file.
+
 ## To Test
 
 ```sh
