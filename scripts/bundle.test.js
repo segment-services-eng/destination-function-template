@@ -27,6 +27,16 @@ function sandboxGlobals() {
   };
 }
 
+const SMOKE_EVENT = { userId: 'user-1', event: 'Smoke Test', properties: {} };
+
+// onBatch receives an array of events; every other handler receives one event.
+// Handing onBatch a bare object would fail any handler that maps over its input.
+function fixtureFor(handlerName) {
+  return SEGMENT_HANDLERS[handlerName] === 'events'
+    ? [SMOKE_EVENT]
+    : SMOKE_EVENT;
+}
+
 // Bundling is the expensive part, so each function is bundled once and shared by
 // its assertions.
 const bundles = new Map();
@@ -88,12 +98,7 @@ describe('function bundles', () => {
 
       const invocations = HANDLER_NAMES.filter(
         handlerName => typeof context[handlerName] === 'function'
-      ).map(handlerName =>
-        context[handlerName](
-          { userId: 'user-1', event: 'Smoke Test', properties: {} },
-          {}
-        )
-      );
+      ).map(handlerName => context[handlerName](fixtureFor(handlerName), {}));
 
       // Settings are empty, so handlers must degrade rather than throw — a
       // handler that assumes configuration is present is a deploy-time bug.
