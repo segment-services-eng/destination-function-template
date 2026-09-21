@@ -2,7 +2,7 @@
 
 ## Project Context
 
-This is a Twilio Segment Destination Function template written in JavaScript (Node.js 18). The function processes customer event data from Segment and executes custom logic for each event type.
+This is a Twilio Segment Destination Function template written in JavaScript (Node.js 22). It holds one or more functions, each of which processes customer event data from Segment and executes custom logic for each event type.
 
 ## Code Review Philosophy
 
@@ -17,26 +17,29 @@ Review code like a maintainer who cares about production stability, developer ex
 
 ### Twilio Segment Function Structure
 
-- Main function is `onTrack(event, settings)` in `src/index.js`
-- Must be an `async function` that handles `SegmentTrackEvent` and `FunctionSettings` parameters
+- This repo is a monorepo: each `functions/<name>/handlers.js` is a separate deployable function, and shared helpers live in `lib/`
+- Handlers such as `onTrack(event, settings)` are exported from `handlers.js`
+- Must be `async function`s that handle `SegmentTrackEvent` and `FunctionSettings` parameters
 - Functions are deployed to Segment's serverless runtime (no traditional server environment)
 - Code runs in a sandboxed environment with limited access to Node.js APIs
 
-### Conditional Exports for Testing
+### Exports and shared code
+
+Handlers are exported unconditionally, because the bundler — not the Segment sandbox — consumes the module:
 
 ```javascript
-// CORRECT: Export only in test environment
-if (process.env.NODE_DEV === 'TEST') {
-  module.exports = { onTrack };
-}
+const { queryProfileAPI } = require('../../lib/queryProfileAPI');
 
-// INCORRECT: Always exporting breaks Segment runtime
-module.exports = { onTrack }; // ❌ Don't do this
+async function onTrack(event, settings) { ... }
+
+module.exports = { onTrack };
 ```
+
+`scripts/bundle.js` inlines the whole require graph into one sandbox-legal file at deploy time, so `require`ing from `lib/` is correct and expected. Do not suggest a `process.env.NODE_DEV` export guard, and do not suggest inlining a helper that already exists in `lib/`.
 
 ### Required Dependencies
 
-All external dependencies must be declared in `package.json`. The Segment runtime does NOT have built-in access to npm packages beyond what's explicitly included.
+Code that ships inside a function must use only the Segment sandbox globals (`fetch`, `btoa`, `_`, `moment`, `RetryError`) and relative `require`s of `lib/` modules. An npm import in `functions/` or `lib/` is a defect: it fails the bundle, because the sandbox has no `node_modules`. Build tooling under `scripts/` is not subject to this and may use npm packages and Node APIs freely.
 
 ## Code Review Checklist
 
@@ -141,11 +144,10 @@ for (let i = 0; i < events.length; i++) {
 
 **✅ Check for:**
 
-- Every new function has corresponding unit tests in `src/index.test.js`
+- Every handler and every `lib/` helper has co-located unit tests (`handlers.test.js`, `lib/<helper>.test.js`); coverage of `functions/` and `lib/` must stay at 100%
 - Tests use proper Jest patterns (describe, it, expect)
 - Mocking of external dependencies (fetch, etc.)
 - Tests verify both success and error cases
-- `process.env['NODE_DEV'] = 'TEST'` set before importing functions
 - Console methods properly mocked to avoid noisy test output
 
 **❌ Reject if:**
@@ -160,8 +162,7 @@ for (let i = 0; i < events.length; i++) {
 
 ```javascript
 // CORRECT: Proper test structure
-process.env['NODE_DEV'] = 'TEST';
-const { onTrack } = require('./index.js');
+const { onTrack } = require('./handlers');
 
 jest.spyOn(global.console, 'log').mockImplementation();
 jest.spyOn(global.console, 'error').mockImplementation();
@@ -302,17 +303,17 @@ async function onTrack(event, settings) {
 
 ### 1. Missing Retry Logic for External APIs
 
+Retries are Segment's job: throwing `RetryError` makes the runtime redeliver the event. There is no npm package to reach for.
+
 ```javascript
-// CORRECT: Use fetch-retry for resilience
-const fetchRetry = require('fetch-retry')(fetch);
+// CORRECT: let Segment redeliver on transient failures
+const response = await fetch(url);
+if (response.status >= 500 || response.status === 429) {
+  throw new RetryError(`Upstream failed with ${response.status}`);
+}
 
-const response = await fetchRetry(url, {
-  retries: 3,
-  retryDelay: 1000
-});
-
-// INCORRECT: No retry on transient failures
-const response = await fetch(url); // ❌ Single attempt
+// INCORRECT: swallow a transient failure, losing the event
+const response = await fetch(url); // ❌ no handling of 5xx/429
 ```
 
 ### 2. Not Validating Settings
@@ -333,29 +334,28 @@ async function onTrack(event, settings) {
 }
 ```
 
-### 3. Breaking Conditional Exports
+### 3. Duplicating a Shared Helper
 
 ```javascript
-// CORRECT: Only export in test mode
-if (process.env.NODE_DEV === 'TEST') {
-  module.exports = { onTrack, helperFunction };
-}
+// CORRECT: require the shared helper; the bundler inlines it
+const { queryProfileAPI } = require('../../lib/queryProfileAPI');
 
-// INCORRECT: Always exporting
-module.exports = { onTrack }; // ❌ Breaks Segment runtime
+// INCORRECT: a second copy of a helper that already exists in lib/
+async function queryProfileAPI(userId) { ... } // ❌ drifts from lib/
 ```
 
-### 4. Improper Use of Globals Available in Tests
+### 4. Requiring npm Packages Inside a Function
 
-The test environment provides global mocks (`fetch`, `btoa`, `_`, `crypto`, `moment`, `cache`), but production code should explicitly require dependencies.
+Segment's runtime supplies `fetch`, `btoa`, `_` (lodash), `moment` (moment-timezone) and `RetryError` as globals, and `setup.js` mirrors them under test. Use them as free identifiers. Requiring the npm package instead makes the bundler inline the whole library into the deployed file.
 
 ```javascript
-// CORRECT: Explicit require in production code
-const moment = require('moment-timezone');
-const _ = require('lodash');
+// CORRECT: use the runtime globals
+const day = moment(event.timestamp).format('YYYY-MM-DD');
+const id = _.get(event, 'context.traits.id');
 
-// INCORRECT: Relying on test globals in production
-// Using _ or moment without require will fail in Segment runtime
+// INCORRECT: requires npm into the sandbox bundle
+const moment = require('moment-timezone'); // ❌
+const _ = require('lodash'); // ❌
 ```
 
 ## Review Response Format

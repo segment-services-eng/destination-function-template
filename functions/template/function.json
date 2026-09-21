@@ -1,0 +1,36 @@
+{
+  "displayName": "Template Function",
+  "description": "Template function: forwards a track event, optionally enriched with Profile API traits",
+  "resourceType": "DESTINATION",
+  "settings": [
+    {
+      "name": "engageSpaceId",
+      "label": "Engage Space ID",
+      "description": "Engage space queried for computed traits",
+      "type": "STRING",
+      "required": false,
+      "sensitive": false
+    },
+    {
+      "name": "profileApiToken",
+      "label": "Profile API Token",
+      "description": "Profile API access token",
+      "type": "STRING",
+      "required": false,
+      "sensitive": true
+    },
+    {
+      "name": "traitsToReturn",
+      "label": "Traits To Return",
+      "description": "Trait names to fetch; leave empty to skip enrichment",
+      "type": "ARRAY",
+      "required": false,
+      "sensitive": false
+    }
+  ],
+  "functionIds": {
+    "dev": "",
+    "qa": "",
+    "prod": ""
+  }
+}
