@@ -38,6 +38,7 @@
     "functions": "node scripts/listFunctions.js",
     "new:function": "node scripts/newFunction.js",
     "bundle": "node scripts/printBundle.js",
+    "provision": "node scripts/provisionFunction.js",
     "prepare": "husky"
   }
 }

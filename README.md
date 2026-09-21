@@ -37,8 +37,73 @@ and ten functions work the same way.
 npm run new:function -- sendToWebhook
 ```
 
-Then fill in `functions/sendToWebhook/function.json` with the Segment function IDs
-for each environment, and implement `handlers.js` plus its tests.
+Then describe it in `functions/sendToWebhook/function.json` — display name,
+description and settings — and implement `handlers.js` plus its tests.
+
+### Creating the function in Segment
+
+`function.json` is the declarative spec for the function as it exists in Segment,
+so you don't have to click it together in the UI:
+
+```json
+{
+  "displayName": "Send To Webhook",
+  "description": "Forwards track events to a customer webhook",
+  "resourceType": "DESTINATION",
+  "settings": [
+    {
+      "name": "webhookUrl",
+      "label": "Webhook URL",
+      "description": "Destination for the payload",
+      "type": "STRING",
+      "required": true,
+      "sensitive": false
+    }
+  ],
+  "functionIds": { "dev": "", "qa": "", "prod": "" }
+}
+```
+
+```sh
+# Dry run: prints the exact API requests and sends nothing
+npm run provision -- sendToWebhook --env=DEV
+
+# Actually create it, then record the new id in function.json
+PUBLIC_API_TOKEN=... npm run provision -- sendToWebhook --env=DEV --apply
+```
+
+**Dry run is the default** — `--apply` is required before anything is sent. What it
+does:
+
+- `functionIds.<env>` empty → `POST /functions` with the code, name, description
+  and settings, then writes the returned id back into `function.json` for you.
+- `functionIds.<env>` already set → `PATCH /functions/<id>` to sync name,
+  description and settings only. **Code is deliberately not sent**, so provisioning
+  can never quietly deploy; `scripts/deployDestinationFunction.js` owns code.
+
+That split makes the command safe to re-run: it converges the function's metadata
+on what the repo declares.
+
+`settings[].type` must be one of `STRING`, `BOOLEAN`, `ARRAY`, `MAP`, `TEXT_MAP`;
+invalid values and missing fields are rejected locally, before a request is made.
+
+#### Connecting it to a source
+
+```sh
+PUBLIC_API_TOKEN=... npm run provision -- sendToWebhook \
+  --env=DEV --connect --source-id=<sourceId> --apply
+```
+
+This is behind an explicit flag because it rests on an inference: Segment's Public
+API documents `POST /destinations` taking a `metadataId`, and a function's
+`catalogId` is the only identifier it exposes that can serve as one — but that link
+isn't documented. Gating it means a wrong inference fails at an opt-in step rather
+than during routine setup. **Verify it once against a sandbox source before relying
+on it.**
+
+The destination is created **disabled with empty settings**, because one that
+started sending before its settings were filled in would deliver broken payloads.
+Enable it in the UI once configured.
 
 ### Sharing code
 

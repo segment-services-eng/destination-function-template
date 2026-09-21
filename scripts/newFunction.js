@@ -44,7 +44,21 @@ function newFunction(name) {
     path.join(target, 'function.json'),
     `${JSON.stringify(
       {
+        displayName: name,
         description: `TODO: describe ${name}`,
+        resourceType: 'DESTINATION',
+        // Declared here so `npm run provision` can create the function in Segment
+        // with its settings already in place.
+        settings: [
+          {
+            name: 'apiKey',
+            label: 'API Key',
+            description: 'TODO: describe this setting, or remove it',
+            type: 'STRING',
+            required: true,
+            sensitive: true
+          }
+        ],
         functionIds: { dev: '', qa: '', prod: '' }
       },
       null,

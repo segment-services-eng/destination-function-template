@@ -48,6 +48,8 @@ module.exports = [
       'jest/no-error-equal': 'off',
       'jest/no-unnecessary-assertion': 'off',
       'jest/valid-expect-with-promise': 'off',
+      // Wants `jest.mock<typeof import('./x')>(...)`, which is TypeScript syntax.
+      'jest/no-untyped-mock-factory': 'off',
       // The rules below are new in eslint-plugin-jest 28/29 and were NOT enforced
       // by the previous eslint-plugin-jest 27 `plugin:jest/all` config. Disabled
       // to preserve prior lint behavior (no test-file changes):
