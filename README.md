@@ -108,10 +108,12 @@ npm run test
 A deploy pushes **one function** to **one environment**:
 
 ```sh
-node scripts/deployDestinationFunction.js template
+DEPLOY_ENV=DEV PUBLIC_API_TOKEN=... node scripts/deployDestinationFunction.js template
 ```
 
 - `DEPLOY_ENV` (`DEV` | `QA` | `PROD`) selects the environment and the function ID.
+  It is required: without it the environment resolves to `UNKNOWN` and no matching
+  function ID exists.
 - `PUBLIC_API_TOKEN` is the only secret required.
 - The function ID comes from `functions/<name>/function.json`. A function ID is an
   identifier rather than a credential — it does nothing without the API token — so
