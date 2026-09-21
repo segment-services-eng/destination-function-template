@@ -32,15 +32,21 @@ const NODE_IMAGE = 'registry.twilio.com/library/base-node/22:22';
  * @return {string}
  */
 function deployCommand(name) {
+  // The name travels as a quoted environment variable rather than being spliced
+  // into the `sh -c` string, so it is data to the shell and never a command.
+  // listFunctions() also restricts names to VALID_FUNCTION_NAME; this is the
+  // second layer.
   return `set -euo pipefail
 source .buildkite/fetch-secrets.sh
+export FUNCTION_NAME='${name}'
 docker run --rm \\
   -v "$$PWD":/workdir -w /workdir \\
   -e DEPLOY_ENV \\
+  -e FUNCTION_NAME \\
   -e HUSKY=0 \\
   -e PUBLIC_API_TOKEN \\
   ${NODE_IMAGE} \\
-  sh -c 'npm ci --no-audit --no-fund --loglevel=error && npm test && node ./scripts/deployDestinationFunction.js ${name}'
+  sh -c 'npm ci --no-audit --no-fund --loglevel=error && npm test && node ./scripts/deployDestinationFunction.js "$$FUNCTION_NAME"'
 `;
 }
 

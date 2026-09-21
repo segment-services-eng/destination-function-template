@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
-const { FUNCTIONS_DIR, listFunctions } = require('./listFunctions');
+const {
+  FUNCTIONS_DIR,
+  VALID_FUNCTION_NAME,
+  listFunctions
+} = require('./listFunctions');
 
 const TEMPLATE = 'template';
-// Becomes a directory name, an npm script argument and a Buildkite step key, so
-// keep it to characters that are safe in all three.
-const VALID_NAME = /^[a-zA-Z][a-zA-Z0-9]*$/;
 
 /**
  * Scaffold a new function by copying functions/template.
@@ -18,12 +19,16 @@ const VALID_NAME = /^[a-zA-Z][a-zA-Z0-9]*$/;
  * @return {string} the created directory
  */
 function newFunction(name) {
+  // path.join throws on a missing name, so this guard has to precede it rather
+  // than join the switch below.
+  if (!name) {
+    throw new Error('Usage: npm run new:function -- <name>');
+  }
+
   const target = path.join(FUNCTIONS_DIR, name);
 
   switch (true) {
-    case !name:
-      throw new Error('Usage: npm run new:function -- <name>');
-    case !VALID_NAME.test(name):
+    case !VALID_FUNCTION_NAME.test(name):
       throw new Error(
         `Invalid name '${name}'. Use letters and digits, starting with a letter (e.g. sendToWebhook).`
       );
