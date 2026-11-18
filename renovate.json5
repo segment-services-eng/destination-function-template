@@ -1,0 +1,6 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  // The CDXP org preset: a 30-day minimumReleaseAge on every package, a weekly schedule and
+  // vulnerability alerts. Repo-specific rules go below it.
+  extends: ['github>twilio-internal/cdxp-renovate-presets:all.json5']
+}
