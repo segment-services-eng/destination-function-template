@@ -62,4 +62,21 @@ The pipeline deploys feature branches to `DEV` automatically. To promote to QA/P
 2. [Prettier for code formatting](https://prettier.io/)
 3. [ESLint for code linting](https://eslint.org/)
 4. [Buildkite pipeline for function deploy](https://buildkite.com/docs/pipelines)
-5. [Husky for commit validation](https://github.com/typicode/husky)
+5. [Git pre-commit hook](#git-hooks) for commit validation
+
+## Git hooks
+
+The pre-commit hook is `.githooks/pre-commit`, tracked like any other file. It switches to the
+Node version in `.nvmrc` (via `nvm`, when installed), stops unless that is Node 22, then runs
+`npx lint-staged` (ESLint and Prettier on the staged files) and `npm test`; the first failing step
+blocks the commit.
+
+`npm ci` and `npm install` run `prepare`, which runs `scripts/installGitHooks.js`: it sets the
+clone's `core.hooksPath` to `.githooks`, and does nothing outside a git work tree, so CI installs
+are unaffected.
+
+- `git config core.hooksPath` prints `.githooks` in a clone whose hooks are set up. If it prints
+  anything else, run `npm install`.
+- `core.hooksPath` is shared by every worktree of a clone, so a worktree on a branch without
+  `.githooks/` runs no hook.
+- To add a hook, add an executable file named after it to `.githooks/`.

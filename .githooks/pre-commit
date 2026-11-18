@@ -1,4 +1,6 @@
 #!/usr/bin/env sh
+# Stop at the first failing check, so a lint failure blocks the commit.
+set -e
 
 # Load NVM and set up Node.js environment
 # Support both homebrew and standard NVM installations
